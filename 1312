@@ -1,0 +1,136 @@
+#include <iostream>
+#include <ctime>
+#include <iomanip>
+
+class Cas {
+private:
+    int hodiny;
+    int minuty;
+    int sekundy;
+
+    // Pomocná metoda pro ověření platnosti času
+    bool jePlatnyCas(int h, int m, int s) const {
+        return (h >= 0 && h <= 23 && m >= 0 && m <= 59 && s >= 0 && s <= 59);
+    }
+
+    // Nastavení systémového času
+    void nastavSystemovyCas() {
+        time_t now = time(0);
+        tm *ltm = localtime(&now);
+        hodiny = ltm->tm_hour;
+        minuty = ltm->tm_min;
+        sekundy = ltm->tm_sec;
+    }
+
+public:
+    // Konstruktor bez parametrů
+    Cas() {
+        nastavSystemovyCas();
+    }
+
+    // Konstruktor s parametry
+    Cas(int h, int m, int s) {
+        if (jePlatnyCas(h, m, s)) {
+            hodiny = h;
+            minuty = m;
+            sekundy = s;
+        } else {
+            nastavSystemovyCas();
+        }
+    }
+
+    // Kopírovací konstruktor
+    Cas(const Cas &c) {
+        hodiny = c.hodiny;
+        minuty = c.minuty;
+        sekundy = c.sekundy;
+    }
+
+    // Metoda pro zobrazení času
+    void zobrazCas() const {
+        std::cout << std::setfill('0') << std::setw(2) << hodiny << ":"
+                  << std::setfill('0') << std::setw(2) << minuty << ":"
+                  << std::setfill('0') << std::setw(2) << sekundy << std::endl;
+    }
+
+    // Metoda pro nastavení času
+    bool nastavCas(int h, int m, int s) {
+        if (jePlatnyCas(h, m, s)) {
+            hodiny = h;
+            minuty = m;
+            sekundy = s;
+            return true;
+        }
+        return false;
+    }
+
+    // Počet sekund od půlnoci
+    int pocetSekundOdPulnoci() const {
+        return hodiny * 3600 + minuty * 60 + sekundy;
+    }
+
+    // Nastavení času ze zadaných sekund
+    int nastavZeSekund(int sekundyOdPulnoci) {
+        int pocetDni = sekundyOdPulnoci / 86400;
+        int zbyvajiciSekundy = sekundyOdPulnoci % 86400;
+
+        hodiny = zbyvajiciSekundy / 3600;
+        zbyvajiciSekundy %= 3600;
+        minuty = zbyvajiciSekundy / 60;
+        sekundy = zbyvajiciSekundy % 60;
+
+        return pocetDni;
+    }
+
+    // Přetížení operátoru ==
+    bool operator==(const Cas &c) const {
+        return (hodiny == c.hodiny && minuty == c.minuty && sekundy == c.sekundy);
+    }
+
+    // Přetížení operátoru =
+    Cas &operator=(const Cas &c) {
+        if (this != &c) {
+            hodiny = c.hodiny;
+            minuty = c.minuty;
+            sekundy = c.sekundy;
+        }
+        return *this;
+    }
+
+    // Přetížení operátoru +=
+    Cas &operator+=(const Cas &c) {
+        int totalSekundy = pocetSekundOdPulnoci() + c.pocetSekundOdPulnoci();
+        nastavZeSekund(totalSekundy);
+        return *this;
+    }
+
+    // Přetížení operátoru +
+    Cas operator+(const Cas &c) const {
+        Cas result = *this;
+        result += c;
+        return result;
+    }
+};
+
+int main() {
+    Cas cas1; // Systémový čas
+    Cas cas2(15, 30, 45); // Platný čas
+    Cas cas3(25, 61, 70); // Neplatný čas (nastaví systémový čas)
+
+    std::cout << "Cas1: ";
+    cas1.zobrazCas();
+
+    std::cout << "Cas2: ";
+    cas2.zobrazCas();
+
+    std::cout << "Cas3: ";
+    cas3.zobrazCas();
+
+    std::cout << "Pocet sekund od pulnoci u Cas2: " << cas2.pocetSekundOdPulnoci() << std::endl;
+
+    Cas cas4 = cas2 + cas1;
+    std::cout << "Cas4 (Cas2 + Cas1): ";
+    cas4.zobrazCas();
+
+    return 0;
+}
